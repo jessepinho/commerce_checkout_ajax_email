@@ -1,0 +1,5 @@
+name = Commerce Checkout - Ajax E-mail
+description = Uses Ajax to save the e-mail address of an anonymous user when she enters her e-mail address during the checkout process.
+package = Commerce (contrib)
+dependencies[] = commerce_checkout
+core = 7.x

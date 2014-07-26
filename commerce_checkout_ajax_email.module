@@ -1,0 +1,59 @@
+<?php
+
+/**
+ * @file
+ * Module file for the Commerce Checkout - Ajax E-mail module.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function commerce_checkout_ajax_email_menu() {
+  $items['commerce_checkout_ajax_email/ajax'] = array(
+    'page callback' => 'commerce_checkout_ajax_email_ajax',
+    'access callback' => 'commerce_checkout_ajax_email_ajax_access',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_checkout_ajax_email_form_commerce_checkout_form_checkout_alter(&$form, &$form_state) {
+  if (isset($form['account']['login']['mail'])) {
+    $form['account']['login']['mail']['#attached']['js'][] = drupal_get_path('module', 'commerce_checkout_ajax_email') . '/commerce_checkout_ajax_email.js';
+    $form['order_id'] = array(
+      '#type' => 'hidden',
+      '#value' => $form_state['order']->order_id,
+    );
+  }
+}
+
+/**
+ * Determine access to the Ajax endpoint.
+ */
+function commerce_checkout_ajax_email_ajax_access() {
+  // Make sure that the order ID is in the current user's orders.
+  return !empty($_SESSION['commerce_cart_orders'])
+    && $_GET['q'] == 'commerce_checkout_ajax_email/ajax'
+    && !empty($_POST['order_id'])
+    && !empty($_POST['mail'])
+    && in_array($_POST['order_id'], $_SESSION['commerce_cart_orders']);
+}
+
+/**
+ * Process an Ajax endpoint request.
+ */
+function commerce_checkout_ajax_email_ajax() {
+  $order = commerce_order_load($_POST['order_id']);
+  if ($order->mail != $_POST['mail']) {
+    $order->mail = $_POST['mail'];
+    if (variable_get('commerce_order_auto_revision', TRUE)) {
+      $order->revision = TRUE;
+      $order->log = t('Order e-mail address updated via Ajax.');
+    }
+    commerce_order_save($order);
+  }
+  drupal_exit();
+}
